@@ -1,12 +1,8 @@
-const express = require("express");
 const jwt = require("jsonwebtoken");
-const router = express.Router();
-
-
 const cookieSecure = process.env.COOKIE_SECURE === "true";
 const cookieSameSite = process.env.COOKIE_SAMESITE || "lax";
 
-router.get("/", (req, res) => {
+const refreshTokenController = async (req, res) => {
   try {
     const token = req.cookies.refreshToken;
 
@@ -35,6 +31,5 @@ router.get("/", (req, res) => {
       .status(403)
       .json({ message: "Token de refresco inválido o expirado" });
   }
-});
-
-module.exports = router;
+};
+module.exports = refreshTokenController;

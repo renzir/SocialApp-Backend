@@ -1,15 +1,10 @@
-const express = require("express");
 const bcrypt = require("bcrypt");
-const UserService = require("../Services/UserService.js");
-const verificarDatos = require("../Middleware/verifyCredentials.js");
-const verifyRegisterData = require("../Middleware/verifyRegisterData.js");
 const generateEmailVerifyToken = require("../utils/emailToken.js");
-const sendVerificationEmail = require("../../../services/sendVerificationEmail.js");
-
-const router = express.Router();
+const sendVerificationEmail = require("../Services/EmailService.js");
+const UserService = require("../Services/UserService.js");
 const saltRounds = 10;
 
-router.post("/", verificarDatos, verifyRegisterData, async (req, res) => {
+const RegisterController = async (req, res) => {
   const { username, password, email } = req.body;
   try {
     const passHash = await bcrypt.hash(password, saltRounds);
@@ -28,6 +23,5 @@ router.post("/", verificarDatos, verifyRegisterData, async (req, res) => {
       .status(500)
       .json({ message: "Error interno al registrar usuario" });
   }
-});
-
-module.exports = router;
+};
+module.exports = RegisterController;

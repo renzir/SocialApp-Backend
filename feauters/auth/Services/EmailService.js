@@ -1,4 +1,4 @@
-const transporter = require("../config/mailer");
+const transporter = require("../../../config/mailer");
 
 async function sendVerificationEmail(email, token) {
   const verifyLink = `${process.env.BACKEND_URL}/auth/verify-email?token=${token}`;
