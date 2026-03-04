@@ -15,10 +15,10 @@ const getProfileService = async (userId) => {
     );
 
     if (rows.length === 0) {
-      return null; // El usuario no existe
+      return null; 
     }
 
-    return rows[0]; // Retornamos el primer (y único) resultado
+    return rows[0]; 
   } catch (error) {
     console.error("Error en GetProfileService:", error);
     throw error;

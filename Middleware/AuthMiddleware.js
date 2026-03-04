@@ -1,6 +1,5 @@
 const jwt = require("jsonwebtoken");
-const db = require("../db/database.js");
-const userService = require("../feauters/auth/Services/UserService.js"); // Asegúrate de que la ruta sea correcta
+const userService = require("../feauters/auth/Services/UserService.js");
 
 async function AuthMiddleware(req, res, next) {
   try {
@@ -11,7 +10,7 @@ async function AuthMiddleware(req, res, next) {
       if (refreshToken) {
         return res
           .status(498)
-          .json({ message: "Token expirado, se puede renovar" });
+          .json({ message: "Token no encontrado, se puede renovar" });
       }
       return res.status(401).json({ message: "Usuario no logueado" });
     }
@@ -21,13 +20,18 @@ async function AuthMiddleware(req, res, next) {
     try {
       decoded = jwt.verify(token, process.env.SECRET);
     } catch (error) {
-      return res.status(401).json({ message: "token invalido o expirado" });
+      if (refreshToken) {
+        return res
+          .status(498)
+          .json({ message: "Token expirado, se puede renovar" });
+      }
+      return res.status(401).json({ message: "Token inválido o expirado" });
     }
 
     const usuario = await userService.findUserByUsername(decoded.username);
 
     if (!usuario)
-      return res.status(404).json({ message: "Usuario no logeado" });
+      return res.status(404).json({ message: "Usuario no encontrado" });
 
     req.email_verified = usuario.email_verified;
     req.user = usuario.username;
