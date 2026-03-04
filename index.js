@@ -2,9 +2,10 @@ const express = require("express");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 require("dotenv").config();
-const AuthRouter = require("./feauters/auth/AuthRouter.js"); 
+const AuthRouter = require("./feauters/auth/AuthRouter.js");
 const UserRouter = require("./feauters/user/UserRouter.js");
 const FriendshipsRouter = require("./feauters/friendships/FriendshipsRouter.js");
+const PostRouter = require("./feauters/post/PostRouter.js");
 
 const app = express();
 const PORT = parseInt(process.env.PORT, 10) || 3000;
@@ -21,10 +22,9 @@ app.use(
 );
 
 app.use("/auth", AuthRouter);
-
 app.use("/user", UserRouter);
-
 app.use("/rels", FriendshipsRouter);
+app.use("/post", PostRouter); 
 
 app.listen(PORT, () => {
   console.log(`Servidor conectado en el puerto ${PORT}`);
