@@ -22,15 +22,15 @@ const SendFriendRequestService = async (userid, friendId) => {
       `;
       
       const result = await db.query(updateQuery, [
-        userid,                         // Nuevo sender (TÚ)
-        friendId,                       // Nuevo receiver (ÉL)
-        existingRelationship.sender_id, // Antiguo sender (para el WHERE)
-        existingRelationship.receiver_id // Antiguo receiver (para el WHERE)
+        userid,                         
+        friendId,                       
+        existingRelationship.sender_id, 
+        existingRelationship.receiver_id 
       ]);
       return result;
 
     } else {
-      // 3. Si no existe, INSERTAMOS una nueva
+     
       const insertQuery = `
         INSERT INTO friendships (sender_id, receiver_id, status) 
         VALUES (?, ?, 'pending')

@@ -6,6 +6,7 @@ const AuthRouter = require("./feauters/auth/AuthRouter.js");
 const UserRouter = require("./feauters/user/UserRouter.js");
 const FriendshipsRouter = require("./feauters/friendships/FriendshipsRouter.js");
 const PostRouter = require("./feauters/post/PostRouter.js");
+const CommentRouter = require("./feauters/comment/CommentRouter.js");
 
 const app = express();
 const PORT = parseInt(process.env.PORT, 10) || 3000;
@@ -24,7 +25,8 @@ app.use(
 app.use("/auth", AuthRouter);
 app.use("/user", UserRouter);
 app.use("/rels", FriendshipsRouter);
-app.use("/post", PostRouter); 
+app.use("/post", PostRouter);
+app.use("/comment", CommentRouter);
 
 app.listen(PORT, () => {
   console.log(`Servidor conectado en el puerto ${PORT}`);

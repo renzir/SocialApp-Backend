@@ -1,17 +1,29 @@
 const db = require("../../../db/database");
 
-const createPostService = async (userId, content) => {
+const createPostService = async (userId, content, imagesUrls = []) => {
+  let connection;
   try {
-    const query = `
-            INSERT INTO posts (user_id, content) 
-            VALUES (?, ?)   
-        `;
+    connection = await db.getConnection();
+    await connection.beginTransaction();
 
-    const result = await db.query(query, [userId, content]);
+    const postQuery = `INSERT INTO posts (user_id, content) VALUES (?, ?)`;
+    const [postResult] = await connection.query(postQuery, [userId, content]);
+    const newPostId = postResult.insertId;
 
-    return result;
+    if (imagesUrls && imagesUrls.length > 0) {
+      const imageValues = imagesUrls.map((url) => [newPostId, url]);
+      const imagesQuery = `INSERT INTO post_images (post_id, image_url) VALUES ?`;
+      await connection.query(imagesQuery, [imageValues]);
+    }
+
+    await connection.commit();
+
+    return { insertId: newPostId, affectedRows: postResult.affectedRows };
   } catch (error) {
-    throw error; 
+    if (connection) await connection.rollback();
+    throw error;
+  } finally {
+    if (connection) connection.release();
   }
 };
 

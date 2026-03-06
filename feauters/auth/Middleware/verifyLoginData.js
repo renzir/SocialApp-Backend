@@ -1,11 +1,11 @@
 const bcrypt = require("bcrypt");
-const UserService = require("../Services/UserService.js"); // Usar el servicio
+const UserService = require("../Services/UserService.js"); 
 
 async function verifyLoginData(req, res, next) {
   const { username, password } = req.body;
 
   try {
-    const usuario = await UserService.findUserByUsername(username);
+    const usuario = await UserService.findUserForLogin(username);
 
     if (!usuario) {
       return res.status(401).json({ message: "Usuario o contraseña incorrectos" });

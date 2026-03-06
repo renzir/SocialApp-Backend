@@ -1,4 +1,4 @@
-const getMuroService = require("../Services/GetMuroService");
+const getMuroService = require("../Services/getMuroService");
 
 const getMuroController = async (req, res) => {
   try {

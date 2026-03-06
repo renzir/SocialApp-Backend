@@ -18,7 +18,9 @@ async function AuthMiddleware(req, res, next) {
     let decoded;
 
     try {
-      decoded = jwt.verify(token, process.env.SECRET);
+      decoded = jwt.verify(token, process.env.SECRET, {
+        algorithms: ["HS256"],
+      });
     } catch (error) {
       if (refreshToken) {
         return res
@@ -30,8 +32,15 @@ async function AuthMiddleware(req, res, next) {
 
     const usuario = await userService.findUserByUsername(decoded.username);
 
-    if (!usuario)
+    if (!usuario) {
       return res.status(404).json({ message: "Usuario no encontrado" });
+    }
+
+    if (usuario.is_banned || usuario.status === "blocked") {
+      res.clearCookie("accessToken");
+      res.clearCookie("refreshToken");
+      return res.status(403).json({ message: "Cuenta suspendida o bloqueada" });
+    }
 
     req.email_verified = usuario.email_verified;
     req.user = usuario.username;
@@ -39,7 +48,7 @@ async function AuthMiddleware(req, res, next) {
 
     next();
   } catch (error) {
-    console.error(error);
+    console.error("Error crítico en AuthMiddleware:", error);
     res.status(500).json({ message: "Error interno del servidor" });
   }
 }

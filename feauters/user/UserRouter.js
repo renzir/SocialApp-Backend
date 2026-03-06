@@ -4,9 +4,13 @@ const getProfileController = require("./Controller/GetProfileControllers.js");
 const AuthMiddleware = require("../../Middleware/AuthMiddleware.js");
 const getMuroController = require("./Controller/GetMuroController.js");
 const getListFriendsController = require("./Controller/getListFriendsController.js");
+const updateProfileImageController = require("./Controller/updateProfileImageController.js");
+const upload = require("../post/middleware/uploadImage.js"); // Reutilizamos el middleware
 
 router.get("/", AuthMiddleware, getProfileController);
 router.get("/muro", AuthMiddleware, getMuroController);
 router.get("/friends", AuthMiddleware, getListFriendsController)
+router.put("/profile-image", AuthMiddleware, upload.single("profile_image"), updateProfileImageController);
 
 module.exports = router;
+

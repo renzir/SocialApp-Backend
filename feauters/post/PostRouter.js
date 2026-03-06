@@ -7,10 +7,17 @@ const GetPostByIdController = require("./controller/GetPostByIdController.js");
 const GetAllPostsController = require("./controller/GetAllPostsController.js");
 const DeletePostController = require("./controller/DeletePostController.js");
 const checkPostOwnership = require("./middleware/checkPostOwnership.js");
+const upload = require("./middleware/uploadImage.js"); 
 
-router.post("/create", AuthMiddleware, createPostController);
+router.post(
+  "/create",
+  AuthMiddleware,
+  upload.array("images", 5),
+  createPostController,
+);
+
 router.get("/getbyid/:id", AuthMiddleware, GetPostByIdController);
-router.get("/getAll", AuthMiddleware, GetAllPostsController);
+router.get("/getall", AuthMiddleware, GetAllPostsController);
 router.put(
   "/modify/:id",
   AuthMiddleware,
