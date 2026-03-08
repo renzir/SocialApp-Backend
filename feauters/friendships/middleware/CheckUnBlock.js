@@ -1,7 +1,7 @@
 const getStateByIDService = require("../services/getStateByIDService.js");
 
 const checkUnblock = async (req, res, next) => {
-  try {
+ 
     const { friendId } = req.body;
     const { id } = req;
 
@@ -27,10 +27,7 @@ const checkUnblock = async (req, res, next) => {
     // }
 
     next(); 
-  } catch (error) {
-    console.error("Error en checkUnblock middleware:", error);
-    res.status(500).json({ error: "Error interno del servidor" });
-  }
+
 };
 
 module.exports = checkUnblock;

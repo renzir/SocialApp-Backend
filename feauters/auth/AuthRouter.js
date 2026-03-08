@@ -1,7 +1,6 @@
 const express = require("express");
 const router = express.Router();
 
-// Controladores
 const {
   LoginController,
   LogoutController,
@@ -9,17 +8,15 @@ const {
 const RegisterController = require("../auth/Controller/RegisterController.js");
 const RefreshController = require("../auth/Controller/RefreshController.js");
 const VerifyEmailController = require("../auth/Controller/VerifyController.js");
-
-// Middlewares
 const verifyCredentials = require("../auth/Middleware/verifyCredentials.js");
+const verifyCredentialsRegister = require("../auth/Middleware/verifyCredentialsRegistrer.js");
 const verifyLoginData = require("../auth/Middleware/verifyLoginData.js");
 const verifyRegisterData = require("../auth/Middleware/verifyRegisterData.js");
 
-// Rutas
 router.post("/login", verifyCredentials, verifyLoginData, LoginController);
 router.post(
   "/register",
-  verifyCredentials,
+  verifyCredentialsRegister,
   verifyRegisterData,
   RegisterController,
 );

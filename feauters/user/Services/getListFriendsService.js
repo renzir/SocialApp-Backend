@@ -1,9 +1,8 @@
 const db = require("../../../db/database.js");
 
 const getListFriendsService = async (id) => {
-  try {
-    const [rows] = await db.execute(
-      `SELECT 
+  const [rows] = await db.execute(
+    `SELECT 
         u.id AS friend_id,
         u.username AS friend_name,
         f.created_at
@@ -15,13 +14,9 @@ const getListFriendsService = async (id) => {
         END
       WHERE (f.sender_id = ? OR f.receiver_id = ?)
         AND f.status = 'confirmed'`,
-      [id, id, id, id],
-    );
+    [id, id, id, id],
+  );
 
-    return rows;
-  } catch (error) {
-    console.error("Error en getListFriendsService:", error);
-    throw error;
-  }
+  return rows;
 };
 module.exports = getListFriendsService;

@@ -1,7 +1,7 @@
 const db = require("../../../db/database");
 
 const getCommentsService = async (postId) => {
-    try {
+   
         const query = `
             SELECT 
                 c.*, 
@@ -14,8 +14,6 @@ const getCommentsService = async (postId) => {
         `;
         const [rows] = await db.query(query, [postId]);
         return rows;
-    } catch (error) {
-        throw error;
-    }
+
 };
 module.exports = getCommentsService;

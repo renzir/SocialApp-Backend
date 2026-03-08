@@ -2,7 +2,7 @@ const sendFriendRequestService = require("../Services/SendFriendRequestService.j
 const getStateByIDService = require("../services/getStateByIDService.js");
 
 const SendFriendRequestController = async (req, res) => {
-  try {
+  
     const { friendId } = req.body;
     const { id } = req; 
 
@@ -15,10 +15,7 @@ const SendFriendRequestController = async (req, res) => {
     }
 
     res.status(200).json({ message: "Solicitud de amistad enviada", result });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: error.message });
-  }
+
 };
 
 module.exports = SendFriendRequestController;

@@ -9,7 +9,9 @@ const VerifyController = async (req, res) => {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.EMAIL_VERIFY_SECRET);
+    const decoded = jwt.verify(token, process.env.EMAIL_VERIFY_SECRET, {
+      algorithms: ['HS256'], 
+    });
 
     const result = await UserService.verifyEmail(decoded.userid);
 
@@ -22,20 +24,20 @@ const VerifyController = async (req, res) => {
           </body>
         </html>
       `);
-    } else {
-      res.status(400).json({
+    } 
+      return res.status(400).json({
         message: "No se pudo verificar el email o usuario no encontrado",
       });
-    }
+    
   } catch (error) {
-    console.error("Error en verificación de email:", error);
+
     if (error.name === "JsonWebTokenError") {
       return res.status(400).json({ message: "Token inválido" });
     }
     if (error.name === "TokenExpiredError") {
       return res.status(400).json({ message: "El token ha expirado" });
     }
-    res.status(500).json({ message: "Error interno del servidor" });
+    throw error;
   }
 };
 module.exports = VerifyController;

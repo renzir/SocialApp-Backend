@@ -1,7 +1,7 @@
 const db = require("../../../db/database");
 
 const SendFriendRequestService = async (userid, friendId) => {
-  try {
+  
     const checkQuery = `
       SELECT sender_id, receiver_id
       FROM friendships 
@@ -40,9 +40,7 @@ const SendFriendRequestService = async (userid, friendId) => {
       return result;
     }
 
-  } catch (error) {
-    throw error;
-  }
+
 };
 
 module.exports = SendFriendRequestService;

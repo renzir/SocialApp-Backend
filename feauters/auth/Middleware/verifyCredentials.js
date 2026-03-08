@@ -1,10 +1,10 @@
-function verificarDatos(req, res, next) {
-  const { username, password } = req.body;
+const logger = require('../../../config/logger.js'); 
+function verifyCredentials(req, res, next) {
+  const { username, password, email } = req.body;
 
   if (!username || !password) {
-    return res
-      .status(400)
-      .json({ message: "Por favor, complete todos los campos." });
+    logger.warn("Registro fallido: Faltan campos", { username, email });
+    return res.status(400).json({ message: "Por favor, complete todos los campos." });
   }
 
   if (typeof username !== "string" || typeof password !== "string") {
@@ -21,11 +21,11 @@ function verificarDatos(req, res, next) {
   }
 
   if (password.length < 6) {
-    return res
-      .status(400)
-      .json({ message: "La contraseña es demasiado corta." });
+    return res.status(400).json({ message: "La contraseña debe tener al menos 6 caracteres." });
   }
+
 
   next();
 }
-module.exports = verificarDatos;
+
+module.exports = verifyCredentials;

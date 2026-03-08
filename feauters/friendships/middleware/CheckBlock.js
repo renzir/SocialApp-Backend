@@ -1,7 +1,7 @@
 const getStateByIDService = require("../services/getStateByIDService.js");
 
 const checkBlock = async (req, res, next) => {
-  try {
+  
     const { friendId } = req.body;
     const { id } = req;
 
@@ -22,10 +22,7 @@ const checkBlock = async (req, res, next) => {
     }
 
     next();
-  } catch (error) {
-    console.error("Error en checkBlock middleware:", error);
-    res.status(500).json({ error: "Error interno del servidor" });
-  }
+
 };
 
 module.exports = checkBlock;

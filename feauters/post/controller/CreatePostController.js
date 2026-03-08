@@ -18,12 +18,12 @@ const createPostController = async (req, res) => {
     let imagesUrls = [];
 
     if (req.files && req.files.length > 0) {
-      console.log("Procesando imágenes..."); 
+      console.log("Procesando imágenes...");
       imagesUrls = await Promise.all(
         req.files.map((file) => imageProcessingService.processImage(file.path)),
       );
 
-      console.log("Imágenes optimizadas:", imagesUrls); 
+      console.log("Imágenes optimizadas:", imagesUrls);
     } else {
       console.log("No llegaron archivos o el campo no se llama 'images'");
     }
@@ -39,18 +39,13 @@ const createPostController = async (req, res) => {
     res.status(201).json({
       message: "Post creado exitosamente",
       postId: result.insertId,
-      images: imagesUrls, 
+      images: imagesUrls,
     });
   } catch (error) {
-    console.error("Error en createPostController:", error);
-
-   
     if (error.code === "LIMIT_UNEXPECTED_FILE") {
       return res.status(400).json({ message: "Error al subir las imágenes" });
     }
-
-    
-    res.status(500).json({ message: "Error interno del servidor" });
+    throw error;
   }
 };
 

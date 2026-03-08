@@ -1,7 +1,7 @@
 const db = require("../../../db/database");
 
 const getProfileService = async (userId) => {
-  try {
+ 
     const [rows] = await db.execute(
       `SELECT 
         id, 
@@ -19,10 +19,7 @@ const getProfileService = async (userId) => {
     }
 
     return rows[0]; 
-  } catch (error) {
-    console.error("Error en GetProfileService:", error);
-    throw error;
-  }
+
 };
 
 module.exports = getProfileService;

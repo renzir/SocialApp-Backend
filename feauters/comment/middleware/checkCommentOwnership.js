@@ -1,7 +1,7 @@
 const getCommentByIdService = require("../services/GetCommentByIdService.js");
 
 const checkCommentOwnership = async (req, res, next) => {
-  try {
+  
     const commentId = req.params.id;
     const userId = req.id;
 
@@ -16,10 +16,7 @@ const checkCommentOwnership = async (req, res, next) => {
     }
 
     next();
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Error interno" });
-  }
+
 };
 
 module.exports = checkCommentOwnership;

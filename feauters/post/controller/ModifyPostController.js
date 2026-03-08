@@ -1,5 +1,5 @@
 const modifyPostService = require("../Services/ModifyPostService.js");
-const imageProcessingService = require("../Services/imageProcessingService.js"); // Importamos el servicio
+const imageProcessingService = require("../Services/imageProcessingService.js"); 
 
 const ModifyPostController = async (req, res) => {
   try {
@@ -42,11 +42,9 @@ const ModifyPostController = async (req, res) => {
 
     res.status(200).json({
       message: "Post modificado exitosamente",
-      imagesUpdated: newImagesUrls.length > 0, 
+      imagesUpdated: newImagesUrls.length > 0,
     });
   } catch (error) {
-    console.error("Error en ModifyPostController:", error);
-
     if (error.code === "LIMIT_UNEXPECTED_FILE") {
       return res.status(400).json({
         message:
@@ -54,7 +52,7 @@ const ModifyPostController = async (req, res) => {
       });
     }
 
-    res.status(500).json({ message: "Error interno al modificar el post" });
+    throw error;
   }
 };
 

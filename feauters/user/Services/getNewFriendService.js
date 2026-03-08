@@ -1,11 +1,8 @@
-
-
 const db = require("../../../db/database");
 
 const getNewFriendService = async (userId) => {
-  try {
-    const [rows] = await db.execute(
-      `
+  const [rows] = await db.execute(
+    `
         SELECT u.id, u.name, u.email, u.avatar
         FROM users u
         WHERE u.id IN (
@@ -14,10 +11,7 @@ const getNewFriendService = async (userId) => {
           WHERE f.user_id = ? AND f.status = 'pending'
         )
       `,
-      [userId]
-    );
-    return rows;
-  } catch (error) {
-    throw error;
-  }
+    [userId],
+  );
+  return rows;
 };

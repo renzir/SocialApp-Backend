@@ -1,7 +1,7 @@
 const getPostByIdService = require("../Services/GetPostByIdService.js");
 
 const checkPostOwnership = async (req, res, next) => {
-  try {
+  
     const postId = req.params.id; 
     const { id: userId } = req;
        
@@ -20,10 +20,7 @@ const checkPostOwnership = async (req, res, next) => {
     }
 
     next(); 
-  } catch (error) {
-    console.error("Error en checkPostOwnership middleware:", error);
-    res.status(500).json({ error: "Error interno del servidor" });
-  }
+
 };
 
 module.exports = checkPostOwnership;

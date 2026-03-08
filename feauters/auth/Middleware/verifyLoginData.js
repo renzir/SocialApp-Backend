@@ -1,28 +1,31 @@
 const bcrypt = require("bcrypt");
-const UserService = require("../Services/UserService.js"); 
+const userService = require("../Services/UserService.js");
+const logger = require("../../../config/logger.js");
 
-async function verifyLoginData(req, res, next) {
+const verifyLoginData = async (req, res, next) => {
   const { username, password } = req.body;
 
-  try {
-    const usuario = await UserService.findUserForLogin(username);
+  const user = await userService.findUserForLogin(username);
 
-    if (!usuario) {
-      return res.status(401).json({ message: "Usuario o contraseña incorrectos" });
-    }
-
-    const testPass = await bcrypt.compare(password, usuario.password);
-
-    if (!testPass) {
-      return res.status(401).json({ message: "Usuario o contraseña incorrectos" });
-    }
-
-    req.usuario = usuario;
-    next();
-  } catch (error) {
-    console.error("Error en verifyLoginData:", error);
-    res.status(500).json({ message: "Error interno del servidor" });
+  if (!user) {
+    logger.warn("Intento de login fallido (usuario no encontrado):", username);
+    return res
+      .status(401)
+      .json({ message: "Usuario o contraseña incorrectos" });
   }
-}
+
+  const passwordMatch = await bcrypt.compare(password, user.password);
+
+  if (!passwordMatch) {
+    logger.warn("Intento de login fallido (contraseña incorrecta):", username);
+    return res
+      .status(401)
+      .json({ message: "Usuario o contraseña incorrectos" });
+  }
+
+
+  req.user = user;
+  next();
+};
 
 module.exports = verifyLoginData;

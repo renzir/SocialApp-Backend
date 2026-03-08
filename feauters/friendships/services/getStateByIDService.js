@@ -1,7 +1,7 @@
 const db = require("../../../db/database");
 
 const getStateByIDService = async (userid, friendId) => {
-  try {
+ 
     const query = `
       SELECT * 
       FROM friendships 
@@ -13,9 +13,7 @@ const getStateByIDService = async (userid, friendId) => {
 
     const state = result[0][0];
     return state;
-  } catch (error) {
-    throw error;
-  }
+
 };
 
 module.exports = getStateByIDService;

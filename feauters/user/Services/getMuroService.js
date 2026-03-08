@@ -1,9 +1,8 @@
 const db = require("../../../db/database.js");
 
 const getMuroService = async (userId) => {
-  try {
-    const [rows] = await db.execute(
-      `SELECT 
+  const [rows] = await db.execute(
+    `SELECT 
           p.id AS post_id,
           u.username AS autor, 
           p.content AS publicacion, 
@@ -18,17 +17,13 @@ const getMuroService = async (userId) => {
          AND p.user_id != ?
        GROUP BY p.id
        ORDER BY p.created_at DESC`,
-      [userId, userId, userId, userId, userId],
-    );
+    [userId, userId, userId, userId, userId],
+  );
 
-    return rows.map((post) => ({
-      ...post,
-      fotos: post.fotos ? post.fotos.split(",") : [],
-    }));
-  } catch (error) {
-    console.error("Error en getMuroService:", error);
-    throw error;
-  }
+  return rows.map((post) => ({
+    ...post,
+    fotos: post.fotos ? post.fotos.split(",") : [],
+  }));
 };
 
 module.exports = getMuroService;

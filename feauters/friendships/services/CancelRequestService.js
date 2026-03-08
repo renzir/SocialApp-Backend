@@ -1,7 +1,7 @@
 const db = require("../../../db/database");
 
 const CancelRequestService = async (userid, friendId) => {
-  try {
+
 
     const query = `
       UPDATE friendships 
@@ -13,9 +13,7 @@ const CancelRequestService = async (userid, friendId) => {
     const result = await db.query(query, [userid, friendId, friendId, userid]);
     
     return result;
-  } catch (error) {
-    throw error;
-  }
+
 };
 
 module.exports = CancelRequestService;

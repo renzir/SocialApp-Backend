@@ -1,7 +1,7 @@
 const cancelFriendRequestService = require("../services/CancelRequestService.js");
 
 const CancelRequestController = async (req, res) => {
-  try {
+ 
     const { friendId } = req.body;
     const { id } = req;
 
@@ -18,9 +18,6 @@ const CancelRequestController = async (req, res) => {
     res
       .status(200)
       .json({ message: "Solicitud cancelada", result });
-  } catch (error) {
-    console.error("Error en Cancel request:", error);
-    res.status(500).json({ message: "Error interno al cancelar la solicitud" });
-  }
+
 };
 module.exports = CancelRequestController;

@@ -1,7 +1,7 @@
 const db = require("../../../db/database");
 
 const blockUserService = async (userid, friendId) => {
-  try {
+  
     const query = `
       UPDATE friendships
       SET status = 'blocked'
@@ -12,9 +12,7 @@ const blockUserService = async (userid, friendId) => {
     const result = await db.query(query, [userid, friendId, friendId, userid]);
 
     return result;
-  } catch (error) {
-    throw error;
-  }
+
 };
 
 module.exports = blockUserService;

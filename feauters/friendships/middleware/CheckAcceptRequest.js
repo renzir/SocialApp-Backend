@@ -1,7 +1,7 @@
 const getStateByIDService = require("../services/getStateByIDService.js");
 
 const checkAcceptRequest = async (req, res, next) => {
-  try {
+  
     const { friendId } = req.body;
     const { id } = req;
 
@@ -52,10 +52,7 @@ const checkAcceptRequest = async (req, res, next) => {
     }
 
     next();
-  } catch (error) {
-    console.error("Error en checkAcceptRequest middleware:", error);
-    res.status(500).json({ error: "Error interno del servidor" });
-  }
+
 };
 
 module.exports = checkAcceptRequest;

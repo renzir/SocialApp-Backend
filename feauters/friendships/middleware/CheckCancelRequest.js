@@ -1,7 +1,7 @@
-const getStateByIDService = require("../services/getStateByIDService.js"); // Importamos el servicio
+const getStateByIDService = require("../services/getStateByIDService.js"); 
 
 const checkCancelRequest = async (req, res, next) => {
-  try {
+  
     const { friendId } = req.body;
     const { id } = req;
 
@@ -31,10 +31,8 @@ const checkCancelRequest = async (req, res, next) => {
     }
 
     next(); 
-  } catch (error) {
-    console.error("Error en checkCancelRequest middleware:", error);
-    res.status(500).json({ error: "Error interno del servidor" });
-  }
+
+
 };
 
 module.exports = checkCancelRequest;
