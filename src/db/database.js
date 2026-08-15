@@ -7,4 +7,4 @@ const pool = mysql.createPool({
   database: "prueba_db",
 });
 
-module.exports = pool; // exportás la función para usarla en los routers
+module.exports = pool;

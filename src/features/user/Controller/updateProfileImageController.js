@@ -1,5 +1,5 @@
 const updateProfileImageService = require("../Services/updateProfileImageService.js");
-const imageProcessingService = require("../../post/Services/imageProcessingService.js"); // Importamos el servicio de optimización
+const imageProcessingService = require("../../post/Services/imageProcessingService.js");  
 
 const updateProfileImageController = async (req, res) => {
   if (!req.file) {
