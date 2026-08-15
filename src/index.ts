@@ -5,13 +5,13 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import dotenv from "dotenv";
 import express, { NextFunction, Request, Response } from "express";
-import AuthRouter from "./features/auth/AuthRouter.js";
-import CommentRouter from "./features/comment/CommentRouter.js";
-import FriendshipsRouter from "./features/friendships/FriendshipsRouter.js";
-import PostRouter from "./features/post/PostRouter.js";
-import UserRouter from "./features/user/UserRouter.js";
 import { resolvers } from "./graphql/resolvers";
 import { typeDefs } from "./graphql/typeDefs";
+import AuthRouter from "./modules/auth/AuthRouter.js";
+import CommentRouter from "./modules/comment/CommentRouter.js";
+import FriendshipsRouter from "./modules/friendships/FriendshipsRouter.js";
+import PostRouter from "./modules/post/PostRouter.js";
+import UserRouter from "./modules/user/UserRouter.js";
 dotenv.config();
 
 const logger = require("./config/logger.js");

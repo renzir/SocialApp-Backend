@@ -1,16 +1,16 @@
+import { findUserByUsername } from "../modules/auth/Services/UserService.js";
+import createCommentService from "../modules/comment/services/CreateCommentService.js";
+import sendFriendRequestService from "../modules/friendships/services/SendFriendRequestService.js";
+import createPostService from "../modules/post/Services/CreatePostService.js";
+import getAllPostsService from "../modules/post/Services/getAllPostsService.js";
 import type { Comment, Post, User } from "../types";
-import { findUserByUsername } from "../features/auth/Services/UserService.js";
-import createCommentService from "../features/comment/services/CreateCommentService.js";
-import sendFriendRequestService from "../features/friendships/services/SendFriendRequestService.js";
-import createPostService from "../features/post/Services/CreatePostService.js";
-import getAllPostsService from "../features/post/Services/getAllPostsService.js";
 
 export const resolvers = {
   Query: {
     hello: () => "¡Hola! Servidor GraphQL funcionando correctamente 🚀",
 
     me: async (_: any, __: any, context: any) => {
-      return null; 
+      return null;
     },
 
     getMuro: async (): Promise<Post[]> => {
@@ -31,7 +31,7 @@ export const resolvers = {
       _: any,
       args: { content: string; images?: string[] },
     ): Promise<Post> => {
-      const userId = 1; 
+      const userId = 1;
 
       const result = await createPostService(userId, args.content, args.images);
       return {
