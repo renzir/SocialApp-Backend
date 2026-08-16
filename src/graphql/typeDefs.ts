@@ -50,11 +50,28 @@ export const typeDefs = `#graphql
     updated_at: String
   }
 
+  type AuthPayload {
+    success: Boolean!
+    message: String!
+    user: User
+    accessToken: String
+  }
+
   type AuthResponse {
     success: Boolean!
     message: String!
   }
 
+  input RegisterInput {
+    username: String!
+    email: String!
+    password: String!
+  }
+
+  input LoginInput {
+    username: String! # Puede ser username o email
+    password: String!
+  }
   type Query {
     hello: String!
     getMuro: [Post!]!
@@ -63,11 +80,14 @@ export const typeDefs = `#graphql
   }
 
   type Mutation {
-    register(username: String!, email: String!, password: String!): AuthResponse
-    login(email: String!, password: String!): AuthResponse
+    register(input: RegisterInput!): AuthPayload!
+    login(input: LoginInput!): AuthPayload!
+    logout: AuthPayload!
+    verifyEmail(token: String!): AuthPayload! # <-- Nueva mutación
     createPost(content: String!, images: [String]): Post
     createComment(postId: ID!, content: String!): Comment
     sendFriendRequest(friendId: ID!): AuthResponse
     acceptFriendRequest(requestId: ID!): AuthResponse
   }
 `;
+

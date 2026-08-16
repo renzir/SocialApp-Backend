@@ -7,11 +7,13 @@ import dotenv from "dotenv";
 import express, { NextFunction, Request, Response } from "express";
 import { resolvers } from "./graphql/resolvers";
 import { typeDefs } from "./graphql/typeDefs";
-import AuthRouter from "./modules/auth/AuthRouter.js";
+import { buildGraphQLContext } from "./middleware/authContext";
+
 import CommentRouter from "./modules/comment/CommentRouter.js";
 import FriendshipsRouter from "./modules/friendships/FriendshipsRouter.js";
 import PostRouter from "./modules/post/PostRouter.js";
 import UserRouter from "./modules/user/UserRouter.js";
+
 dotenv.config();
 
 const logger = require("./config/logger.js");
@@ -19,8 +21,7 @@ require("./instrument.js");
 
 async function startServer() {
   const app = express();
-  const rawPort = parseInt(process.env.PORT || "3000", 10);
-  const PORT: number = isNaN(rawPort) ? 3000 : rawPort;
+  const PORT: number = parseInt(process.env.PORT || "3000", 10);
 
   const allowedOrigins = [
     process.env.FRONTEND_URL || "http://localhost:5173",
@@ -29,16 +30,13 @@ async function startServer() {
 
   app.set("trust proxy", 1);
 
-  app.use(
-    cors({
-      origin: allowedOrigins,
-      credentials: true,
-    }),
-  );
+  // Configuración global de Middleware
+  app.use(cors({ origin: allowedOrigins, credentials: true }));
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
   app.use(cookieParser());
 
+  // Servidor Apollo GraphQL
   const apolloServer = new ApolloServer({
     typeDefs,
     resolvers,
@@ -46,24 +44,15 @@ async function startServer() {
 
   await apolloServer.start();
 
+  // Endpoint GraphQL
   app.use(
     "/graphql",
-    cors({
-      origin: allowedOrigins,
-      credentials: true,
-    }),
-    (req: Request, res: Response, next: NextFunction) => {
-      if (!req.body) {
-        req.body = {};
-      }
-      next();
-    },
     expressMiddleware(apolloServer, {
-      context: async ({ req, res }) => ({ req, res }),
-    }) as any,
+      context: buildGraphQLContext,
+    }) as any
   );
 
-  app.use("/auth", AuthRouter);
+  // Routers REST remanentes (a migrar progresivamente)
   app.use("/user", UserRouter);
   app.use("/rels", FriendshipsRouter);
   app.use("/post", PostRouter);
@@ -78,9 +67,7 @@ async function startServer() {
 
   app.listen(PORT, () => {
     console.log(`Servidor conectado en el puerto ${PORT}`);
-    console.log(
-      `🚀 GraphQL Endpoint disponible en http://localhost:${PORT}/graphql`,
-    );
+    console.log(`🚀 GraphQL Endpoint disponible en http://localhost:${PORT}/graphql`);
   });
 }
 

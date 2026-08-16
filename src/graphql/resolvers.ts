@@ -1,16 +1,43 @@
-import { findUserByUsername } from "../modules/auth/Services/UserService.js";
+import { GraphQLContext } from "../middleware/authContext.js";
+import { authServices } from "../modules/auth/AuthService.js";
 import createCommentService from "../modules/comment/services/CreateCommentService.js";
 import sendFriendRequestService from "../modules/friendships/services/SendFriendRequestService.js";
 import createPostService from "../modules/post/Services/CreatePostService.js";
 import getAllPostsService from "../modules/post/Services/getAllPostsService.js";
 import type { Comment, Post, User } from "../types";
 
+interface RegisterInput {
+  username: string;
+  email: string;
+  password: string;
+}
+
+interface LoginInput {
+  username: string;
+  password: string;
+}
+
+interface CreatePostArgs {
+  content: string;
+  images?: string[];
+}
+
+interface CreateCommentArgs {
+  postId: string;
+  content: string;
+}
+
 export const resolvers = {
   Query: {
     hello: () => "¡Hola! Servidor GraphQL funcionando correctamente 🚀",
 
-    me: async (_: any, __: any, context: any) => {
-      return null;
+    me: async (
+      _: unknown,
+      __: unknown,
+      context: GraphQLContext,
+    ): Promise<User | null> => {
+      if (!context.user) return null;
+      return authServices.findUserById(context.user.id);
     },
 
     getMuro: async (): Promise<Post[]> => {
@@ -18,20 +45,101 @@ export const resolvers = {
     },
 
     getProfile: async (
-      _: any,
+      _: unknown,
       args: { username: string },
     ): Promise<User | null> => {
-      const user = await findUserByUsername(args.username);
-      return user;
+      return authServices.findUserByUsername(args.username);
     },
   },
 
   Mutation: {
+    register: async (_: unknown, { input }: { input: RegisterInput }) => {
+      try {
+        const user = await authServices.register(input);
+        return {
+          success: true,
+          message:
+            "Usuario registrado con éxito. Se ha enviado un correo de verificación.",
+          user,
+        };
+      } catch (error: any) {
+        return {
+          success: false,
+          message: error.message || "Error al registrar el usuario",
+          user: null,
+        };
+      }
+    },
+
+    verifyEmail: async (_: unknown, { token }: { token: string }) => {
+      try {
+        await authServices.verifyEmailToken(token);
+        return {
+          success: true,
+          message: "Email verificado correctamente",
+        };
+      } catch (error: any) {
+        return {
+          success: false,
+          message: error.message || "Error al verificar el email",
+        };
+      }
+    },
+
+    login: async (
+      _: unknown,
+      { input }: { input: LoginInput },
+      context: GraphQLContext,
+    ) => {
+      try {
+        const { user, tokens } = await authServices.login(input);
+
+        context.res.cookie("accessToken", tokens.accessToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+        });
+
+        context.res.cookie("refreshToken", tokens.refreshToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+        });
+
+        return {
+          success: true,
+          message: "Inicio de sesión exitoso",
+          user,
+          accessToken: tokens.accessToken,
+        };
+      } catch (error: any) {
+        return {
+          success: false,
+          message: error.message || "Credenciales inválidas",
+          user: null,
+          accessToken: null,
+        };
+      }
+    },
+
+    logout: async (_: unknown, __: unknown, context: GraphQLContext) => {
+      context.res.clearCookie("accessToken");
+      context.res.clearCookie("refreshToken");
+      return {
+        success: true,
+        message: "Sesión cerrada correctamente",
+      };
+    },
+
     createPost: async (
-      _: any,
-      args: { content: string; images?: string[] },
+      _: unknown,
+      args: CreatePostArgs,
+      context: GraphQLContext,
     ): Promise<Post> => {
-      const userId = 1;
+      if (!context.user) {
+        throw new Error("No estás autenticado");
+      }
+      const userId = context.user.id;
 
       const result = await createPostService(userId, args.content, args.images);
       return {
@@ -42,8 +150,15 @@ export const resolvers = {
       };
     },
 
-    sendFriendRequest: async (_: any, args: { friendId: string }) => {
-      const senderId = 1;
+    sendFriendRequest: async (
+      _: unknown,
+      args: { friendId: string },
+      context: GraphQLContext,
+    ) => {
+      if (!context.user) {
+        throw new Error("No estás autenticado");
+      }
+      const senderId = context.user.id;
       const friendId = parseInt(args.friendId, 10);
 
       await sendFriendRequestService(senderId, friendId);
@@ -55,10 +170,14 @@ export const resolvers = {
     },
 
     createComment: async (
-      _: any,
-      args: { postId: string; content: string },
+      _: unknown,
+      args: CreateCommentArgs,
+      context: GraphQLContext,
     ): Promise<Comment> => {
-      const userId = 1;
+      if (!context.user) {
+        throw new Error("No estás autenticado");
+      }
+      const userId = context.user.id;
       const postIdNum = parseInt(args.postId, 10);
 
       const result = await createCommentService(
