@@ -57,6 +57,12 @@ export const typeDefs = `#graphql
     accessToken: String
   }
 
+  type RefreshTokenPayload {
+    success: Boolean!
+    message: String!
+    accessToken: String
+  }
+
   type AuthResponse {
     success: Boolean!
     message: String!
@@ -69,25 +75,44 @@ export const typeDefs = `#graphql
   }
 
   input LoginInput {
-    username: String! # Puede ser username o email
+    username: String!
     password: String!
   }
+
+  input UpdateProfileInput {
+    bio: String
+    banner_image_url: String
+  }
+
   type Query {
     hello: String!
     getMuro: [Post!]!
     getProfile(username: String!): User
     me: User
+    friendsList(userId: ID!): [User!]!
+    getSuggestedUsers(userId: ID!): [User!]!
+    getPostById(postId: ID!): Post
+    getAllPosts: [Post!]!
+    getComments(postId: ID!): [Comment!]!
+    getFriendshipStatus(friendId: ID!): String
   }
 
   type Mutation {
     register(input: RegisterInput!): AuthPayload!
     login(input: LoginInput!): AuthPayload!
+    refreshToken: RefreshTokenPayload!
     logout: AuthPayload!
-    verifyEmail(token: String!): AuthPayload! # <-- Nueva mutación
+    verifyEmail(token: String!): AuthPayload!
+    updateProfile(input: UpdateProfileInput!): User!
     createPost(content: String!, images: [String]): Post
+    modifyPost(postId: ID!, content: String!, images: [String]): Post
+    deletePost(postId: ID!): AuthResponse!
     createComment(postId: ID!, content: String!): Comment
+    deleteComment(commentId: ID!): AuthResponse!
     sendFriendRequest(friendId: ID!): AuthResponse
     acceptFriendRequest(requestId: ID!): AuthResponse
+    cancelFriendRequest(friendId: ID!): AuthResponse
+    blockUser(userId: ID!): AuthResponse!
+    unblockUser(userId: ID!): AuthResponse!
   }
 `;
-

@@ -4,13 +4,12 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
-    "start": "node dist/index.js",
-    "dev": "ts-node-dev --respawn --transpile-only src/index.ts"
+    "test": "vitest run"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
+  "description": "test test",
   "dependencies": {
     "@apollo/server": "^5.5.1",
     "@as-integrations/express5": "^1.1.2",
@@ -38,7 +37,12 @@
     "@types/jsonwebtoken": "^9.0.8",
     "@types/multer": "^1.4.12",
     "@types/node": "^22.13.1",
+    "@types/nodemailer": "^6.4.17",
+    "@types/sinon": "^22.0.0",
+    "sinon": "^22.1.0",
     "ts-node-dev": "^2.0.0",
-    "typescript": "^5.7.3"
+    "typescript": "^5.7.3",
+    "vitest": "^4.1.11"
   }
 }
+

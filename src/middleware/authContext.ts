@@ -23,10 +23,17 @@ export async function buildGraphQLContext({
 
   if (token) {
     try {
-      const decoded = jwt.verify(
-        token,
-        process.env.ACCESS_TOKEN_SECRET || "default_access"
-      ) as { id: number; username: string };
+      const secret = process.env.ACCESS_TOKEN_SECRET;
+      if (!secret) {
+        throw new Error(
+          "La variable de entorno ACCESS_TOKEN_SECRET no está definida",
+        );
+      }
+
+      const decoded = jwt.verify(token, secret) as {
+        id: number;
+        username: string;
+      };
 
       user = { id: decoded.id, username: decoded.username };
     } catch (err) {

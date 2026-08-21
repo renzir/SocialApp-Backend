@@ -9,15 +9,10 @@ import { resolvers } from "./graphql/resolvers";
 import { typeDefs } from "./graphql/typeDefs";
 import { buildGraphQLContext } from "./middleware/authContext";
 
-import CommentRouter from "./modules/comment/CommentRouter.js";
-import FriendshipsRouter from "./modules/friendships/FriendshipsRouter.js";
-import PostRouter from "./modules/post/PostRouter.js";
-import UserRouter from "./modules/user/UserRouter.js";
-
 dotenv.config();
 
-const logger = require("./config/logger.js");
-require("./instrument.js");
+import logger from "./config/logger";
+import "./instrument";
 
 async function startServer() {
   const app = express();
@@ -49,25 +44,21 @@ async function startServer() {
     "/graphql",
     expressMiddleware(apolloServer, {
       context: buildGraphQLContext,
-    }) as any
+    }) as any,
   );
-
-  // Routers REST remanentes (a migrar progresivamente)
-  app.use("/user", UserRouter);
-  app.use("/rels", FriendshipsRouter);
-  app.use("/post", PostRouter);
-  app.use("/comment", CommentRouter);
 
   Sentry.setupExpressErrorHandler(app);
 
-  app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+  app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
     logger.error(`Error en ${req.path}:`, err);
     res.status(500).json({ error: "Internal server error" });
   });
 
   app.listen(PORT, () => {
     console.log(`Servidor conectado en el puerto ${PORT}`);
-    console.log(`🚀 GraphQL Endpoint disponible en http://localhost:${PORT}/graphql`);
+    console.log(
+      `🚀 GraphQL Endpoint disponible en http://localhost:${PORT}/graphql`,
+    );
   });
 }
 

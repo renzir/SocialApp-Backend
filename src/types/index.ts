@@ -18,7 +18,7 @@ export interface PostImage {
   post_id: number;
   image_url: string;
   order_index: number;
-  created_at: string;
+  created_at?: string;
 }
 
 export interface Post {
@@ -26,7 +26,9 @@ export interface Post {
   user_id: number;
   content: string;
   images?: PostImage[];
-  // Campos del autor devueltos vía JOIN con la tabla 'users'
+  // Campos devueltos en las respuestas de GraphQL / JOINs con users
+  autor?: string;
+  imagen_perfil?: string;
   username?: string;
   profile_image_url?: string;
   created_at?: string;
@@ -38,8 +40,9 @@ export interface Comment {
   post_id: number;
   user_id: number;
   content: string;
-  // Campos del autor devueltos vía JOIN con la tabla 'users'
+  // Campos devueltos en las respuestas de GraphQL / JOINs con users
   username?: string;
+  perfil_imagen?: string;
   profile_image_url?: string;
   created_at: string;
   updated_at?: string;

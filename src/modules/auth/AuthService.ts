@@ -1,26 +1,13 @@
 import bcrypt from "bcrypt";
+import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import pool from "../../db/database.js";
 import { User } from "../../types/index.js";
 import { loginSchema, registerSchema } from "../../types/zodSchemas.js";
-import { generateEmailVerifyToken } from "./emailToken.js";
 import sendVerificationEmail from "./EmailService.js";
-
-interface LoginPayload {
-  username: string;
-  password: string;
-}
-
-interface RegisterPayload {
-  username: string;
-  email: string;
-  password: string;
-}
-
-interface TokenPair {
-  accessToken: string;
-  refreshToken: string;
-}
+import { authQueries } from "./authQueries.js";
+import { generateEmailVerifyToken } from "./emailToken.js";
+import type { LoginPayload, RegisterPayload, TokenPair } from "./types.js";
 
 const SALT_ROUNDS = 10;
 
@@ -38,7 +25,7 @@ export const authServices = {
       await conn.beginTransaction();
 
       const [existingUser]: [any[], any] = await conn.execute(
-        "SELECT id FROM users WHERE username = ? OR email = ?",
+        authQueries.checkUserExists,
         [username, email],
       );
 
@@ -51,7 +38,7 @@ export const authServices = {
       const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
 
       const [result]: [any, any] = await conn.execute(
-        "INSERT INTO users (username, password, email) VALUES (?, ?, ?)",
+        authQueries.insertNewUser,
         [username, hashedPassword, email],
       );
 
@@ -90,7 +77,7 @@ export const authServices = {
     loginSchema.parse({ username, password });
 
     const [rows]: [any[], any] = await pool.execute(
-      "SELECT * FROM users WHERE username = ? OR email = ?",
+      authQueries.findUserForLogin,
       [username, username],
     );
 
@@ -113,17 +100,16 @@ export const authServices = {
   },
 
   async findUserById(id: number): Promise<User | null> {
-    const [rows]: [any[], any] = await pool.execute(
-      "SELECT id, username, email, profile_image_url, banner_image_url, bio, is_active, email_verified, created_at FROM users WHERE id = ?",
-      [id],
-    );
+    const [rows]: [any[], any] = await pool.execute(authQueries.findUserById, [
+      id,
+    ]);
 
     return rows[0] || null;
   },
 
   async findUserByUsername(username: string): Promise<User | null> {
     const [rows]: [any[], any] = await pool.execute(
-      "SELECT id, username, email, profile_image_url, banner_image_url, bio, is_active, email_verified, created_at FROM users WHERE username = ?",
+      authQueries.findUserByUsername,
       [username],
     );
 
@@ -131,16 +117,21 @@ export const authServices = {
   },
 
   async verifyEmail(userId: number): Promise<boolean> {
-    const [result]: [any, any] = await pool.execute(
-      "UPDATE users SET email_verified = true WHERE id = ?",
-      [userId],
-    );
+    const [result]: [any, any] = await pool.execute(authQueries.verifyEmail, [
+      userId,
+    ]);
     return result.affectedRows > 0;
   },
 
   async verifyEmailToken(token: string): Promise<boolean> {
+    const secret = process.env.EMAIL_VERIFY_SECRET;
+    if (!secret) {
+      throw new Error(
+        "La variable de entorno EMAIL_VERIFY_SECRET no está definida",
+      );
+    }
+
     try {
-      const secret = process.env.EMAIL_VERIFY_SECRET || "default_verify_secret";
       const decoded = jwt.verify(token, secret) as { userid: number };
 
       return await this.verifyEmail(decoded.userid);
@@ -148,11 +139,99 @@ export const authServices = {
       throw new Error("El token de verificación es inválido o ha expirado");
     }
   },
+
+  async refreshToken(oldRefreshToken: string): Promise<TokenPair> {
+    const refreshSecret = process.env.REFRESH_TOKEN_SECRET;
+    if (!refreshSecret) {
+      throw new Error(
+        "La variable de entorno REFRESH_TOKEN_SECRET no está definida",
+      );
+    }
+
+    let decoded: { id: number; exp?: number };
+    try {
+      decoded = jwt.verify(oldRefreshToken, refreshSecret) as {
+        id: number;
+        exp?: number;
+      };
+    } catch (err) {
+      throw new Error("Refresh token inválido o expirado");
+    }
+
+    const tokenHash = crypto
+      .createHash("sha256")
+      .update(oldRefreshToken)
+      .digest("hex");
+
+    // Verificar si el token ya fue revocado previamente
+    const [revokedRows]: [any[], any] = await pool.execute(
+      authQueries.isTokenRevoked,
+      [tokenHash],
+    );
+
+    if (revokedRows.length > 0) {
+      // Intento de reuso de token revocado (posible ataque/intercepción)
+      throw new Error("Refresh token revocado. Inicie sesión nuevamente.");
+    }
+
+    // Obtener usuario para asegurarnos de que sigue activo
+    const user = await this.findUserById(decoded.id);
+    if (!user || user.is_active === false) {
+      throw new Error("Usuario inactivo o no encontrado");
+    }
+
+    // Revocar el token actual (Rotation)
+    const expiresAt = decoded.exp
+      ? new Date(decoded.exp * 1000)
+      : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+    await pool.execute(authQueries.revokeRefreshToken, [tokenHash, expiresAt]);
+
+    // Generar nuevos tokens
+    const newTokens = generateTokens(user.id, user.username);
+    return newTokens;
+  },
+
+  async revokeToken(refreshToken: string): Promise<void> {
+    try {
+      const refreshSecret = process.env.REFRESH_TOKEN_SECRET;
+      if (!refreshSecret) return;
+
+      const decoded = jwt.decode(refreshToken) as { exp?: number } | null;
+      const tokenHash = crypto
+        .createHash("sha256")
+        .update(refreshToken)
+        .digest("hex");
+
+      const expiresAt = decoded?.exp
+        ? new Date(decoded.exp * 1000)
+        : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+      await pool.execute(authQueries.revokeRefreshToken, [
+        tokenHash,
+        expiresAt,
+      ]);
+    } catch {
+      // Ignorar errores al revocar en logout
+    }
+  },
 };
 
 function generateTokens(userId: number, username: string): TokenPair {
-  const accessSecret = process.env.ACCESS_TOKEN_SECRET || "default_access";
-  const refreshSecret = process.env.REFRESH_TOKEN_SECRET || "default_refresh";
+  const accessSecret = process.env.ACCESS_TOKEN_SECRET;
+  const refreshSecret = process.env.REFRESH_TOKEN_SECRET;
+
+  if (!accessSecret) {
+    throw new Error(
+      "La variable de entorno ACCESS_TOKEN_SECRET no está definida",
+    );
+  }
+
+  if (!refreshSecret) {
+    throw new Error(
+      "La variable de entorno REFRESH_TOKEN_SECRET no está definida",
+    );
+  }
 
   return {
     accessToken: jwt.sign({ id: userId, username }, accessSecret, {
