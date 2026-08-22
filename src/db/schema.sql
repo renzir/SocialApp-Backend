@@ -1,11 +1,9 @@
 -- =============================================
 -- Esquema de Base de Datos - Red Social
 -- =============================================
-
 -- Crear base de datos si no existe
 CREATE DATABASE IF NOT EXISTS red_social DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE red_social;
-
 -- =============================================
 -- Tabla: users
 -- =============================================
@@ -22,8 +20,7 @@ CREATE TABLE IF NOT EXISTS users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_email (email),
     INDEX idx_username (username)
-) ENGINE=InnoDB;
-
+) ENGINE = InnoDB;
 -- =============================================
 -- Tabla: posts
 -- =============================================
@@ -36,8 +33,7 @@ CREATE TABLE IF NOT EXISTS posts (
     CONSTRAINT fk_posts_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     INDEX idx_posts_user (user_id),
     INDEX idx_posts_created (created_at DESC)
-) ENGINE=InnoDB;
-
+) ENGINE = InnoDB;
 -- =============================================
 -- Tabla: post_images
 -- =============================================
@@ -50,8 +46,7 @@ CREATE TABLE IF NOT EXISTS post_images (
     CONSTRAINT fk_post_images_post FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
     INDEX idx_post_images_post (post_id),
     INDEX idx_post_images_order (post_id, order_index)
-) ENGINE=InnoDB;
-
+) ENGINE = InnoDB;
 -- =============================================
 -- Tabla: comments
 -- =============================================
@@ -67,8 +62,7 @@ CREATE TABLE IF NOT EXISTS comments (
     INDEX idx_comments_post (post_id),
     INDEX idx_comments_user (user_id),
     INDEX idx_comments_created (post_id, created_at DESC)
-) ENGINE=InnoDB;
-
+) ENGINE = InnoDB;
 -- =============================================
 -- Tabla: post_likes (Likes a Posts)
 -- =============================================
@@ -82,8 +76,7 @@ CREATE TABLE IF NOT EXISTS post_likes (
     UNIQUE INDEX uk_post_likes (post_id, user_id),
     INDEX idx_post_likes_post (post_id),
     INDEX idx_post_likes_user (user_id)
-) ENGINE=InnoDB;
-
+) ENGINE = InnoDB;
 -- =============================================
 -- Tabla: comment_likes (Likes a Comentarios)
 -- =============================================
@@ -97,8 +90,7 @@ CREATE TABLE IF NOT EXISTS comment_likes (
     UNIQUE INDEX uk_comment_likes (comment_id, user_id),
     INDEX idx_comment_likes_comment (comment_id),
     INDEX idx_comment_likes_user (user_id)
-) ENGINE=InnoDB;
-
+) ENGINE = InnoDB;
 -- =============================================
 -- Tabla: friendships (Sistema tipo Facebook)
 -- =============================================
@@ -115,8 +107,7 @@ CREATE TABLE IF NOT EXISTS friendships (
     INDEX idx_friendships_sender (sender_id),
     INDEX idx_friendships_receiver (receiver_id),
     INDEX idx_friendships_status (status)
-) ENGINE=InnoDB;
-
+) ENGINE = InnoDB;
 -- =============================================
 -- Tabla: blocks (Bloqueos entre usuarios)
 -- =============================================
@@ -130,15 +121,21 @@ CREATE TABLE IF NOT EXISTS blocks (
     UNIQUE INDEX uk_blocks (blocker_id, blocked_id),
     INDEX idx_blocks_blocker (blocker_id),
     INDEX idx_blocks_blocked (blocked_id)
-) ENGINE=InnoDB;
-
+) ENGINE = InnoDB;
 -- =============================================
 -- Tabla: notifications (Notificaciones)
 -- =============================================
 CREATE TABLE IF NOT EXISTS notifications (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
-    type ENUM('like_post', 'like_comment', 'new_friend_request', 'friend_request_accepted', 'new_comment', 'new_message') NOT NULL,
+    type ENUM(
+        'like_post',
+        'like_comment',
+        'new_friend_request',
+        'friend_request_accepted',
+        'new_comment',
+        'new_message'
+    ) NOT NULL,
     sender_id INT NOT NULL,
     post_id INT NULL,
     comment_id INT NULL,
@@ -146,14 +143,15 @@ CREATE TABLE IF NOT EXISTS notifications (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_notifications_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     CONSTRAINT fk_notifications_sender FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
-    CONSTRAINT fk_notifications_post FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE SET NULL,
-    CONSTRAINT fk_notifications_comment FOREIGN KEY (comment_id) REFERENCES comments(id) ON DELETE SET NULL,
-    INDEX idx_notifications_user (user_id),
-    INDEX idx_notifications_user_unread (user_id, is_read),
-    INDEX idx_notifications_type (type),
-    INDEX idx_notifications_created (created_at DESC)
-) ENGINE=InnoDB;
-
+    CONSTRAINT fk_notifications_post FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE
+    SET NULL,
+        CONSTRAINT fk_notifications_comment FOREIGN KEY (comment_id) REFERENCES comments(id) ON DELETE
+    SET NULL,
+        INDEX idx_notifications_user (user_id),
+        INDEX idx_notifications_user_unread (user_id, is_read),
+        INDEX idx_notifications_type (type),
+        INDEX idx_notifications_created (created_at DESC)
+) ENGINE = InnoDB;
 -- =============================================
 -- Tabla: messages (Mensajes Directos)
 -- =============================================
@@ -170,4 +168,13 @@ CREATE TABLE IF NOT EXISTS messages (
     INDEX idx_messages_receiver (receiver_id),
     INDEX idx_messages_conversation (sender_id, receiver_id, created_at),
     INDEX idx_messages_created (created_at DESC)
-) ENGINE=InnoDB;
+) ENGINE = InnoDB;
+-- Add new section with SQL for the revoked_tokens table after the users table definition
+        -- New table to track revoked refresh tokens (for rotation and logout)
+        CREATE TABLE IF NOT EXISTS revoked_tokens (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            token_hash VARCHAR(64) UNIQUE NOT NULL,
+            expires_at TIMESTAMP NOT NULL,
+            INDEX idx_revoked_expires (expires_at),
+            INDEX idx_revoked_hash (token_hash)
+        ) ENGINE=InnoDB;

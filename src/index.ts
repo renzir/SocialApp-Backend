@@ -5,19 +5,17 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import dotenv from "dotenv";
 import express, { NextFunction, Request, Response } from "express";
+import fs from "fs";
+import path from "path";
 import { resolvers } from "./graphql/resolvers";
 import { typeDefs } from "./graphql/typeDefs";
 import { buildGraphQLContext } from "./middleware/authContext";
-
-import CommentRouter from "./modules/comment/CommentRouter.js";
-import FriendshipsRouter from "./modules/friendships/FriendshipsRouter.js";
-import PostRouter from "./modules/post/PostRouter.js";
-import UserRouter from "./modules/user/UserRouter.js";
+import { uploadRouter } from "./routes/upload";
 
 dotenv.config();
 
-const logger = require("./config/logger.js");
-require("./instrument.js");
+import logger from "./config/logger";
+import "./instrument";
 
 async function startServer() {
   const app = express();
@@ -28,6 +26,11 @@ async function startServer() {
     "https://studio.apollographql.com",
   ];
 
+  const uploadsDir = path.resolve(process.cwd(), "uploads");
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+
   app.set("trust proxy", 1);
 
   // Configuración global de Middleware
@@ -35,6 +38,12 @@ async function startServer() {
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
   app.use(cookieParser());
+
+  // Servir archivos estáticos subidos
+  app.use("/uploads", express.static(uploadsDir));
+
+  // REST endpoints
+  app.use("/api/upload", uploadRouter);
 
   // Servidor Apollo GraphQL
   const apolloServer = new ApolloServer({
@@ -49,25 +58,21 @@ async function startServer() {
     "/graphql",
     expressMiddleware(apolloServer, {
       context: buildGraphQLContext,
-    }) as any
+    }) as any,
   );
-
-  // Routers REST remanentes (a migrar progresivamente)
-  app.use("/user", UserRouter);
-  app.use("/rels", FriendshipsRouter);
-  app.use("/post", PostRouter);
-  app.use("/comment", CommentRouter);
 
   Sentry.setupExpressErrorHandler(app);
 
-  app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+  app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
     logger.error(`Error en ${req.path}:`, err);
     res.status(500).json({ error: "Internal server error" });
   });
 
   app.listen(PORT, () => {
     console.log(`Servidor conectado en el puerto ${PORT}`);
-    console.log(`🚀 GraphQL Endpoint disponible en http://localhost:${PORT}/graphql`);
+    console.log(
+      `🚀 GraphQL Endpoint disponible en http://localhost:${PORT}/graphql`,
+    );
   });
 }
 
