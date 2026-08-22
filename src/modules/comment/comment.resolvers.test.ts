@@ -35,7 +35,11 @@ describe("commentResolvers", () => {
         postId: "10",
       });
 
-      expect(commentService.getComments).toHaveBeenCalledWith(10);
+      expect(commentService.getComments).toHaveBeenCalledWith(
+        10,
+        undefined,
+        undefined,
+      );
       expect(result).toEqual(mockComments);
     });
   });

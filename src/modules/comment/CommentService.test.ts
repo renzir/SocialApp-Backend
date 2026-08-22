@@ -76,7 +76,7 @@ describe("CommentService", () => {
       const result = await commentService.getComments(10);
       expect(db.execute).toHaveBeenCalledWith(
         expect.stringContaining("SELECT"),
-        [10],
+        [10, 20, 0],
       );
       expect(result).toEqual(mockRows);
     });
