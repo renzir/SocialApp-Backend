@@ -3,3 +3,5 @@ dist/
 .env
 .prompts
 TESTING_RULES.md
+uploads/*
+!uploads/.gitkeep
