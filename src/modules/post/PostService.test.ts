@@ -30,7 +30,12 @@ vi.mock("fs", () => ({
 
 // Mock path.resolve to return predictable paths for testing
 const mockResolve = vi.spyOn(path, "resolve");
-mockResolve.mockImplementation((...args: string[]) => args.join("/"));
+mockResolve.mockImplementation((...args: string[]) => {
+  if (args.length === 2 && args[1] === "uploads") {
+    return path.win32.normalize("C:/absolute/path/to/uploads");
+  }
+  return path.win32.normalize(args.join("/"));
+});
 
 describe("PostService", () => {
   beforeEach(() => {
@@ -279,7 +284,7 @@ describe("PostService", () => {
         }
         if (sqlStr.includes("image_url")) {
           return Promise.resolve([
-            [{ image_url: "/absolute/path/to/uploads/img.jpg" }],
+            [{ image_url: path.resolve(process.cwd(), "uploads", "img.jpg") }],
             {},
           ] as any);
         }
@@ -288,13 +293,12 @@ describe("PostService", () => {
 
       mockFs.existsSync.mockReturnValue(true);
 
+      const targetPath = path.resolve(process.cwd(), "uploads", "img.jpg");
       const result = await postService.deletePost(1, 1);
 
       expect(result).toBe(true);
       expect(mockConn.commit).toHaveBeenCalled();
-      expect(mockFs.unlinkSync).toHaveBeenCalledWith(
-        "/absolute/path/to/uploads/img.jpg",
-      );
+      expect(mockFs.unlinkSync).toHaveBeenCalledWith(targetPath);
     });
 
     it("should handle missing files gracefully", async () => {
@@ -308,7 +312,15 @@ describe("PostService", () => {
         }
         if (sqlStr.includes("image_url")) {
           return Promise.resolve([
-            [{ image_url: "/absolute/path/to/uploads/missing.jpg" }],
+            [
+              {
+                image_url: path.resolve(
+                  process.cwd(),
+                  "uploads",
+                  "missing.jpg",
+                ),
+              },
+            ],
             {},
           ] as any);
         }

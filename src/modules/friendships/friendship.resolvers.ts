@@ -51,12 +51,13 @@ export const friendshipResolvers = {
         throw new Error("No estás autenticado");
       }
 
-      const friendIdNum = parseInt(args.requestId, 10);
-      if (isNaN(friendIdNum)) throw new Error("ID de usuario/solicitud inválido");
+      const requestIdNum = parseInt(args.requestId, 10);
+      if (isNaN(requestIdNum))
+        throw new Error("ID de usuario/solicitud inválido");
 
       await friendshipService.acceptFriendRequest(
         context.user.id,
-        friendIdNum,
+        requestIdNum,
       );
 
       return {
@@ -77,10 +78,7 @@ export const friendshipResolvers = {
       const friendIdNum = parseInt(args.friendId, 10);
       if (isNaN(friendIdNum)) throw new Error("ID de usuario inválido");
 
-      await friendshipService.cancelFriendRequest(
-        context.user.id,
-        friendIdNum,
-      );
+      await friendshipService.cancelFriendRequest(context.user.id, friendIdNum);
 
       return {
         success: true,

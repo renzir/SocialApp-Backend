@@ -5,9 +5,12 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import dotenv from "dotenv";
 import express, { NextFunction, Request, Response } from "express";
+import fs from "fs";
+import path from "path";
 import { resolvers } from "./graphql/resolvers";
 import { typeDefs } from "./graphql/typeDefs";
 import { buildGraphQLContext } from "./middleware/authContext";
+import { uploadRouter } from "./routes/upload";
 
 dotenv.config();
 
@@ -23,6 +26,11 @@ async function startServer() {
     "https://studio.apollographql.com",
   ];
 
+  const uploadsDir = path.resolve(process.cwd(), "uploads");
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+
   app.set("trust proxy", 1);
 
   // Configuración global de Middleware
@@ -30,6 +38,12 @@ async function startServer() {
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
   app.use(cookieParser());
+
+  // Servir archivos estáticos subidos
+  app.use("/uploads", express.static(uploadsDir));
+
+  // REST endpoints
+  app.use("/api/upload", uploadRouter);
 
   // Servidor Apollo GraphQL
   const apolloServer = new ApolloServer({

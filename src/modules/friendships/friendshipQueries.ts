@@ -35,6 +35,13 @@ export const friendshipQueries = {
     WHERE (sender_id = ? AND receiver_id = ?)
        OR (sender_id = ? AND receiver_id = ?)
   `,
+
+  getFriendshipById: `
+    SELECT sender_id, receiver_id
+    FROM friendships
+    WHERE id = ? AND status = 'pending'
+  `,
 };
 
 export default friendshipQueries;
+

@@ -1,5 +1,8 @@
-import pool from "../../db/database.js";
 import type { Post, User } from "../../types/index.js";
+import {
+  createCommentSchema,
+  updateProfileSchema,
+} from "../../types/zodSchemas.js";
 import { authServices } from "../auth/AuthService.js";
 import { commentService } from "../comment/CommentService.js";
 import { postService } from "../post/PostService.js";
@@ -9,6 +12,7 @@ import { userService } from "./UserService.js";
 interface UpdateProfileInput {
   bio?: string;
   banner_image_url?: string;
+  profile_image_url?: string;
 }
 
 export const userResolvers = {
@@ -25,48 +29,33 @@ export const userResolvers = {
       return authServices.findUserByUsername(args.username);
     },
 
-    getMuro: async (_: unknown, __: unknown, context: any): Promise<Post[]> => {
+    searchUsers: async (
+      _: unknown,
+      args: { query: string; limit?: number },
+    ): Promise<User[]> => {
+      return userService.searchUsers(args.query, args.limit || 10);
+    },
+
+    getMuro: async (
+      _: unknown,
+      args: { limit: number; offset: number },
+      context: any,
+    ): Promise<{ posts: Post[]; total_count: number; has_more: boolean }> => {
       if (!context.user || !context.user.id) {
         throw new Error("No estás autenticado");
       }
 
       const userId = context.user.id;
-      const sql = `
-        SELECT 
-          p.id,
-          p.user_id,
-          p.content,
-          p.created_at,
-          p.updated_at,
-          u.username AS autor,
-          u.profile_image_url AS imagen_perfil,
-          GROUP_CONCAT(i.image_url ORDER BY i.order_index ASC) AS fotos
-        FROM posts p
-        JOIN users u ON p.user_id = u.id
-        LEFT JOIN friendships f ON (
-          (f.sender_id = p.user_id AND f.receiver_id = ?) OR 
-          (f.receiver_id = p.user_id AND f.sender_id = ?)
-        )
-        LEFT JOIN post_images i ON p.id = i.post_id
-        WHERE (p.user_id = ? OR f.status = 'confirmed')
-          AND p.user_id NOT IN (
-            SELECT blocked_id FROM blocks WHERE blocker_id = ?
-            UNION
-            SELECT blocker_id FROM blocks WHERE blocked_id = ?
-          )
-        GROUP BY p.id
-        ORDER BY p.created_at DESC
-      `;
+      const limit = args.limit || 20;
+      const offset = args.offset || 0;
 
-      const [rows]: [any[], any] = await pool.execute(sql, [
+      const { posts, totalCount } = await userService.getMuroPosts(
         userId,
-        userId,
-        userId,
-        userId,
-        userId,
-      ]);
+        limit,
+        offset,
+      );
 
-      return rows.map((post: any) => {
+      const formattedPosts = posts.map((post: any) => {
         const imageUrls: string[] = post.fotos ? post.fotos.split(",") : [];
         const images = imageUrls.map((url, idx) => ({
           id: idx + 1,
@@ -87,6 +76,12 @@ export const userResolvers = {
           updated_at: post.updated_at,
         };
       });
+
+      return {
+        posts: formattedPosts,
+        total_count: totalCount,
+        has_more: totalCount > offset + posts.length,
+      };
     },
 
     friendsList: async (

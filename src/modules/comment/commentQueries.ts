@@ -21,7 +21,8 @@ export const commentQueries = {
     FROM comments c
     INNER JOIN users u ON c.user_id = u.id
     WHERE c.post_id = ?
-    ORDER BY c.created_at ASC
+    ORDER BY c.created_at DESC
+    LIMIT ? OFFSET ?
   `,
 
   findCommentUserIdById: `SELECT user_id FROM comments WHERE id = ?`,

@@ -93,10 +93,12 @@ describe("FriendshipService", () => {
 
   describe("acceptFriendRequest", () => {
     it("debería actualizar la solicitud a 'confirmed' y retornar true si existen filas afectadas", async () => {
-      mockedPool.execute.mockResolvedValueOnce([
-        { affectedRows: 1 } as ResultSetHeader,
-        [],
-      ]);
+      mockedPool.execute
+        .mockResolvedValueOnce([
+          [{ sender_id: 1, receiver_id: 2 } as RowDataPacket],
+          [],
+        ])
+        .mockResolvedValueOnce([{ affectedRows: 1 } as ResultSetHeader, []]);
 
       const result = await friendshipService.acceptFriendRequest(2, 1);
       expect(mockedPool.execute).toHaveBeenCalledWith(

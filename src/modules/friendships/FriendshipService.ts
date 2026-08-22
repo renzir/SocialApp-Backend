@@ -1,4 +1,5 @@
 import pool from "../../db/database.js";
+import { notificationService } from "../notifications/NotificationService.js";
 import { friendshipQueries } from "./friendshipQueries.js";
 
 export const friendshipService = {
@@ -32,21 +33,48 @@ export const friendshipService = {
       ]);
     }
 
+    // Notificar al receptor sobre la solicitud de amistad solo si no estaba pendiente
+    if (existingRelationship?.status !== "pending") {
+      await notificationService.createNotification(
+        friendId,
+        "new_friend_request",
+        userId,
+      );
+    }
+
     return true;
   },
 
   async acceptFriendRequest(
     userId: number,
-    friendId: number,
+    requestId: number,
   ): Promise<boolean> {
-    const [result]: [any, any] = await pool.execute(
-      friendshipQueries.acceptFriendRequest,
-      [friendId, userId],
+    // 1. Obtener la solicitud para verificar el emisor y el receptor
+    const [rows]: [any[], any] = await pool.execute(
+      friendshipQueries.getFriendshipById,
+      [requestId],
     );
 
-    if (result.affectedRows === 0) {
+    const friendship = rows[0];
+
+    if (!friendship || friendship.receiver_id !== userId) {
       throw new Error("No hay una solicitud pendiente para aceptar");
     }
+
+    const senderId = friendship.sender_id;
+
+    // 2. Actualizar el estado de la solicitud
+    await pool.execute(friendshipQueries.acceptFriendRequest, [
+      senderId,
+      userId,
+    ]);
+
+    // 3. Notificar al emisor original que su solicitud fue aceptada
+    await notificationService.createNotification(
+      senderId,
+      "friend_request_accepted",
+      userId,
+    );
 
     return true;
   },

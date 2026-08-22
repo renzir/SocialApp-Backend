@@ -1,5 +1,7 @@
 import pool from "../../db/database.js";
 import type { Comment } from "../../types/index.js";
+import { notificationService } from "../notifications/NotificationService.js";
+import { postQueries } from "../post/postQueries.js";
 import { commentQueries } from "./commentQueries.js";
 
 export const commentService = {
@@ -15,13 +17,30 @@ export const commentService = {
 
     const newCommentId = result.insertId;
 
-    const [rows]: [any[], any] = await pool.execute(
+    // Obtener el autor del post para la notificación
+    const postResult = await pool.execute(postQueries.checkPostUserId, [
+      postId,
+    ]);
+    const postRows = postResult[0] as any[];
+    const postAuthorId = postRows[0]?.user_id;
+    if (postAuthorId && postAuthorId !== userId) {
+      await notificationService.createNotification(
+        postAuthorId,
+        "new_comment",
+        userId,
+        postId,
+        newCommentId,
+      );
+    }
+
+    const resultRows = await pool.execute(
       commentQueries.findCommentWithUserById,
       [newCommentId],
     );
-
+    // Asegurarse de manejar el array de resultados devuelto por mysql2
+    // console.log("DEBUG resultRows:", resultRows);
+    const rows = (Array.isArray(resultRows) ? resultRows[0] : []) as any[];
     const commentRow = rows[0];
-
     return {
       id: newCommentId,
       post_id: postId,
@@ -34,10 +53,14 @@ export const commentService = {
     };
   },
 
-  async getComments(postId: number): Promise<Comment[]> {
+  async getComments(
+    postId: number,
+    limit: number = 20,
+    offset: number = 0,
+  ): Promise<Comment[]> {
     const [rows]: [any[], any] = await pool.execute(
       commentQueries.getCommentsByPostId,
-      [postId],
+      [postId, limit, offset],
     );
 
     return rows.map((row: any) => ({

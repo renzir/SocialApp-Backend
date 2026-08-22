@@ -3,10 +3,17 @@ import { commentService } from "./CommentService.js";
 
 export const commentResolvers = {
   Query: {
-    getComments: async (_: unknown, { postId }: { postId: string }) => {
+    getComments: async (
+      _: unknown,
+      {
+        postId,
+        limit,
+        offset,
+      }: { postId: string; limit: number; offset: number },
+    ) => {
       const postIdNum = parseInt(postId, 10);
       if (isNaN(postIdNum)) throw new Error("ID de publicación inválido");
-      return commentService.getComments(postIdNum);
+      return commentService.getComments(postIdNum, limit, offset);
     },
   },
 

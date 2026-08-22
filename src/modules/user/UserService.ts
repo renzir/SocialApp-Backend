@@ -127,6 +127,86 @@ class UserService {
     ]);
     return rows as User[];
   }
+
+  async searchUsers(query: string, limit: number = 10): Promise<User[]> {
+    const searchTerm = `%${query}%`;
+    const [rows] = await pool.execute(userQueries.searchUsers, [
+      searchTerm,
+      searchTerm,
+      limit,
+    ]);
+    return rows as User[];
+  }
+
+  async getMuroPosts(
+    userId: number,
+    limit: number,
+    offset: number,
+  ): Promise<{ posts: any[]; totalCount: number }> {
+    const countSql = `
+      SELECT COUNT(DISTINCT p.id) as total
+      FROM posts p
+      LEFT JOIN friendships f ON (
+        (f.sender_id = p.user_id AND f.receiver_id = ?) OR
+        (f.receiver_id = p.user_id AND f.sender_id = ?)
+      )
+      WHERE (p.user_id = ? OR f.status = 'confirmed')
+        AND p.user_id NOT IN (
+          SELECT blocked_id FROM blocks WHERE blocker_id = ?
+          UNION
+          SELECT blocker_id FROM blocks WHERE blocked_id = ?
+        )
+    `;
+
+    const dataSql = `
+      SELECT
+        p.id,
+        p.user_id,
+        p.content,
+        p.created_at,
+        p.updated_at,
+        u.username AS autor,
+        u.profile_image_url AS imagen_perfil,
+        GROUP_CONCAT(i.image_url ORDER BY i.order_index ASC) AS fotos
+      FROM posts p
+      JOIN users u ON p.user_id = u.id
+      LEFT JOIN friendships f ON (
+        (f.sender_id = p.user_id AND f.receiver_id = ?) OR
+        (f.receiver_id = p.user_id AND f.sender_id = ?)
+      )
+      LEFT JOIN post_images i ON p.id = i.post_id
+      WHERE (p.user_id = ? OR f.status = 'confirmed')
+        AND p.user_id NOT IN (
+          SELECT blocked_id FROM blocks WHERE blocker_id = ?
+          UNION
+          SELECT blocker_id FROM blocks WHERE blocked_id = ?
+        )
+      GROUP BY p.id
+      ORDER BY p.created_at DESC
+      LIMIT ? OFFSET ?
+    `;
+
+    const [countRows]: [any[], any] = await pool.execute(countSql, [
+      userId,
+      userId,
+      userId,
+      userId,
+      userId,
+    ]);
+    const totalCount = countRows[0].total;
+
+    const [posts]: [any[], any] = await pool.execute(dataSql, [
+      userId,
+      userId,
+      userId,
+      userId,
+      userId,
+      limit,
+      offset,
+    ]);
+
+    return { posts, totalCount };
+  }
 }
 
 export const userService = new UserService();

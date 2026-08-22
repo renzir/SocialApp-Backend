@@ -5,9 +5,15 @@ import { z } from "zod";
 // =============================================
 
 export const registerSchema = z.object({
-  username: z.string().min(3, "El usuario debe tener al menos 3 caracteres").max(50, "Máximo 50 caracteres"),
+  username: z
+    .string()
+    .min(3, "El usuario debe tener al menos 3 caracteres")
+    .max(50, "Máximo 50 caracteres"),
   email: z.string().email("Email inválido"),
-  password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres").max(255),
+  password: z
+    .string()
+    .min(6, "La contraseña debe tener al menos 6 caracteres")
+    .max(255),
 });
 
 export const loginSchema = z.object({
@@ -44,14 +50,21 @@ export const createCommentSchema = z.object({
 // Perfiles de Usuario
 // =============================================
 
-export const updateProfileSchema = z.object({
-  username: z.string().min(3).max(50).optional(),
-  bio: z.string().max(500).nullable().optional(),
-  banner_image_url: z.string().url().nullable().optional(),
-}).refine(data => 
-  data.username || data.bio || data.banner_image_url,
-  { message: "Debe proporcionar al menos un campo para actualizar" }
-);
+export const updateProfileSchema = z
+  .object({
+    username: z.string().min(3).max(50).optional(),
+    bio: z.string().max(500).nullable().optional(),
+    banner_image_url: z.string().url().nullable().optional(),
+    profile_image_url: z.string().url().nullable().optional(),
+  })
+  .refine(
+    (data) =>
+      data.username ||
+      data.bio ||
+      data.banner_image_url ||
+      data.profile_image_url,
+    { message: "Debe proporcionar al menos un campo para actualizar" },
+  );
 
 export const emailVerificationSchema = z.object({
   token: z.string(),
@@ -62,5 +75,8 @@ export const emailVerificationSchema = z.object({
 // =============================================
 
 export const sendFriendRequestSchema = z.object({
-  receiver_id: z.union([z.number(), z.string().regex(/^\d+$/).transform(Number)]),
+  receiver_id: z.union([
+    z.number(),
+    z.string().regex(/^\d+$/).transform(Number),
+  ]),
 });

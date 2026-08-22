@@ -55,6 +55,13 @@ export const userQueries = {
       AND u.id != ?
     LIMIT ?
   `,
+
+  searchUsers: `
+    SELECT id, username, profile_image_url, bio
+    FROM users
+    WHERE (username LIKE ? OR email LIKE ?) AND is_active = 1
+    LIMIT ?
+  `,
 };
 
 export default userQueries;
