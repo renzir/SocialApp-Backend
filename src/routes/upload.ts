@@ -59,13 +59,16 @@ uploadRouter.post(
     upload.array("images", 5)(req, res, (err) => {
       if (err instanceof multer.MulterError) {
         if (err.code === "LIMIT_FILE_SIZE") {
-          return res
+          res
             .status(400)
             .json({ error: "El archivo excede el límite máximo de 5MB" });
+          return;
         }
-        return res.status(400).json({ error: err.message });
+        res.status(400).json({ error: err.message });
+        return;
       } else if (err) {
-        return res.status(400).json({ error: err.message });
+        res.status(400).json({ error: err.message });
+        return;
       }
       next();
     });

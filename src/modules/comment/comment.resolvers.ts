@@ -9,7 +9,7 @@ export const commentResolvers = {
         postId,
         limit,
         offset,
-      }: { postId: string; limit: number; offset: number },
+      }: { postId: string; limit?: number; offset?: number },
     ) => {
       const postIdNum = parseInt(postId, 10);
       if (isNaN(postIdNum)) throw new Error("ID de publicación inválido");
@@ -56,3 +56,4 @@ export const commentResolvers = {
     },
   },
 };
+
