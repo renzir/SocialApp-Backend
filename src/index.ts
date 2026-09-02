@@ -1,5 +1,5 @@
-import "./instrument"; // ¡Debe ser el primer import para Sentry y dotenv!
-
+import "dotenv/config"; // 1. Siempre primero
+import "./instrument";   // 2. Instrumentación Sentry
 import { ApolloServer } from "@apollo/server";
 import { expressMiddleware } from "@as-integrations/express5";
 import * as Sentry from "@sentry/node";

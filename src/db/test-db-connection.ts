@@ -3,6 +3,7 @@
  * Ejecutar con: npx ts-node-dev src/db/test-db-connection.ts
  */
 
+//npx ts-node-dev src/db/test-db-connection.ts
 import dotenv from "dotenv";
 import mysql from "mysql2/promise";
 
