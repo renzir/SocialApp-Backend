@@ -1,9 +1,14 @@
+import { GraphQLError } from "graphql";
 import {
   emailVerificationSchema,
   loginSchema,
   registerSchema,
 } from "../../types/zodSchemas.js";
 import { authServices } from "./AuthService.js";
+import {
+  getAccessTokenCookieOptions,
+  getRefreshTokenCookieOptions,
+} from "./cookieOptions.js";
 
 interface RegisterInput {
   username: string;
@@ -32,15 +37,12 @@ export const authResolvers = {
           user,
         };
       } catch (error: any) {
-        const message =
-          error.errors?.[0]?.message ||
-          error.message ||
-          "Error al registrar el usuario";
-        return {
-          success: false,
-          message,
-          user: null,
-        };
+        throw new GraphQLError(
+          error.message || "Error al registrar el usuario",
+          {
+            extensions: { code: "REGISTER_ERROR" },
+          },
+        );
       }
     },
 
@@ -54,16 +56,16 @@ export const authResolvers = {
         const { user, tokens } = await authServices.login(validatedInput);
 
         if (context.res) {
-          context.res.cookie("accessToken", tokens.accessToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
-          });
-          context.res.cookie("refreshToken", tokens.refreshToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
-          });
+          context.res.cookie(
+            "accessToken",
+            tokens.accessToken,
+            getAccessTokenCookieOptions(),
+          );
+          context.res.cookie(
+            "refreshToken",
+            tokens.refreshToken,
+            getRefreshTokenCookieOptions(),
+          );
         }
 
         return {
@@ -73,6 +75,9 @@ export const authResolvers = {
           accessToken: tokens.accessToken,
         };
       } catch (error: any) {
+        // Registrar el error real en la consola del servidor para depuración
+        console.error("❌ Error en login:", error.message, error.stack);
+
         const message =
           error.errors?.[0]?.message ||
           error.message ||
@@ -100,16 +105,16 @@ export const authResolvers = {
         const tokens = await authServices.refreshToken(oldRefreshToken);
 
         if (context.res) {
-          context.res.cookie("accessToken", tokens.accessToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
-          });
-          context.res.cookie("refreshToken", tokens.refreshToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
-          });
+          context.res.cookie(
+            "accessToken",
+            tokens.accessToken,
+            getAccessTokenCookieOptions(),
+          );
+          context.res.cookie(
+            "refreshToken",
+            tokens.refreshToken,
+            getRefreshTokenCookieOptions(),
+          );
         }
         return {
           success: true,
@@ -118,8 +123,11 @@ export const authResolvers = {
         };
       } catch (error: any) {
         if (context.res) {
-          context.res.clearCookie("accessToken");
-          context.res.clearCookie("refreshToken");
+          context.res.clearCookie("accessToken", getAccessTokenCookieOptions());
+          context.res.clearCookie(
+            "refreshToken",
+            getRefreshTokenCookieOptions(),
+          );
         }
         return {
           success: false,
@@ -135,8 +143,8 @@ export const authResolvers = {
         await authServices.revokeToken(refreshToken);
       }
       if (context.res) {
-        context.res.clearCookie("accessToken");
-        context.res.clearCookie("refreshToken");
+        context.res.clearCookie("accessToken", getAccessTokenCookieOptions());
+        context.res.clearCookie("refreshToken", getRefreshTokenCookieOptions());
       }
       return {
         success: true,

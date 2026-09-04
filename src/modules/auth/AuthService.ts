@@ -61,10 +61,11 @@ export const authServices = {
         email_verified: false,
         is_active: true,
       };
-    } catch (error) {
+      } catch (error) {
+      console.error("Error en register:", error);
       await conn.rollback();
       throw error;
-    } finally {
+    }finally {
       conn.release();
     }
   },
