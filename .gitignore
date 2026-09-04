@@ -5,3 +5,4 @@ dist/
 TESTING_RULES.md
 uploads/*
 !uploads/.gitkeep
+RATE_LIMITING_IMPLEMENTATION.md
